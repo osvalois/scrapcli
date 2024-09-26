@@ -1,0 +1,7 @@
+Enter project name: inegi_incidencia
+Enter URL to scrape: https://www.inegi.org.mx/temas/incidencia/
+Enter HTML selector to analyze (can be a CSS or XPath selector): body
+Enter tags to extract (separated by commas): h1,h2,h3,h4,h5,p,table,div.card-body
+DB: mongodb+srv://ovalois:eM5FzXaL7OP0D7TQ@ovm.wms9hla.mongodb.net/?retryWrites=true&w=majority&appName=OVM
+$(process.env.HTML_SELECTOR)
+$(element).

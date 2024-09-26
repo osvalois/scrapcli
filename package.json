@@ -1,0 +1,29 @@
+{
+    "name": "scrapcli",
+    "version": "1.0.0",
+    "description": "A CLI tool for generating web scraping projects",
+    "main": "bin/scrapcli.js",
+    "bin": {
+      "scrapcli": "./bin/scrapcli.js"
+    },
+    "scripts": {
+      "test": "jest",
+      "lint": "eslint .",
+      "format": "prettier --write \"**/*.js\""
+    },
+    "keywords": ["cli", "web-scraping", "puppeteer", "cheerio"],
+    "author": "Oscar Valois",
+    "license": "MIT",
+    "dependencies": {
+      "chalk": "^4.1.2",
+      "commander": "^8.3.0",
+      "ejs": "^3.1.6",
+      "fs-extra": "^10.0.0",
+      "inquirer": "^8.2.0"
+    },
+    "devDependencies": {
+      "eslint": "^8.2.0",
+      "jest": "^27.3.1",
+      "prettier": "^2.4.1"
+    }
+  }

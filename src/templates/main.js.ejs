@@ -13,7 +13,7 @@ const logger = winston.createLogger({
     winston.format.timestamp(),
     winston.format.json()
   ),
-  defaultMeta: { service: 'web-scraper' },
+  defaultMeta: { service: '<%= projectName %>-scraper' },
   transports: [
     new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
     new winston.transports.File({ filename: 'logs/combined.log' }),
@@ -55,12 +55,19 @@ const scrapeWebsite = async (db) => {
     const $ = cheerio.load(html);
     const results = [];
 
+    const tagsToExtract = process.env.TAGS_TO_EXTRACT.split(',');
+    
     $(process.env.HTML_SELECTOR).each((index, element) => {
       const item = {};
-      process.env.TAGS_TO_EXTRACT.split(',').forEach(tag => {
-        item[tag.trim()] = $(element).find(tag).text().trim();
+      tagsToExtract.forEach(tag => {
+        const elements = $(element).find(tag);
+        if (elements.length > 0) {
+          item[tag] = elements.map((i, el) => $(el).text().trim()).get();
+        }
       });
-      results.push(item);
+      if (Object.keys(item).length > 0) {
+        results.push(item);
+      }
     });
 
     const outputPath = path.join(__dirname, '..', 'data', `scraped_data_${Date.now()}.json`);

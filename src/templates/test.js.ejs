@@ -7,14 +7,14 @@ jest.mock('fs').promises;
 jest.mock('puppeteer');
 jest.mock('mongodb');
 
-describe('Web Scraper', () => {
+describe('<%= projectName %> Scraper', () => {
   let mockDb;
 
   beforeEach(() => {
     jest.resetModules();
-    process.env.TARGET_URL = 'https://example.com';
-    process.env.HTML_SELECTOR = '.test-selector';
-    process.env.TAGS_TO_EXTRACT = 'h1,p';
+    process.env.TARGET_URL = '<%= url %>';
+    process.env.HTML_SELECTOR = '<%= selector %>';
+    process.env.TAGS_TO_EXTRACT = '<%= tags %>';
 
     mockDb = {
       collection: jest.fn().mockReturnValue({
@@ -42,10 +42,12 @@ describe('Web Scraper', () => {
 
     const result = await scrapeWebsite(mockDb);
 
-    expect(result).toEqual([{ h1: 'Test Title', p: 'Test Paragraph' }]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toHaveProperty('h1', ['Test Title']);
+    expect(result[0]).toHaveProperty('p', ['Test Paragraph']);
     expect(fs.promises.writeFile).toHaveBeenCalled();
     expect(mockBrowser.close).toHaveBeenCalled();
-    expect(mockDb.collection().insertMany).toHaveBeenCalledWith([{ h1: 'Test Title', p: 'Test Paragraph' }]);
+    expect(mockDb.collection().insertMany).toHaveBeenCalledWith(result);
   });
 
   it('should handle errors gracefully', async () => {

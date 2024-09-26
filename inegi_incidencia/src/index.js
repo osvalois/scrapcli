@@ -1,0 +1,108 @@
+const fs = require('fs').promises;
+const path = require('path');
+const puppeteer = require('puppeteer');
+const cheerio = require('cheerio');
+const { MongoClient } = require('mongodb');
+const winston = require('winston');
+require('dotenv').config();
+
+// Configure logger
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'web-scraper' },
+  transports: [
+    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'logs/combined.log' }),
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    }),
+  ],
+});
+
+let mongoClient;
+
+const connectToDatabase = async () => {
+  try {
+    mongoClient = new MongoClient(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    await mongoClient.connect();
+    logger.info('Connected to MongoDB');
+    return mongoClient.db(process.env.DB_NAME);
+  } catch (error) {
+    logger.error('Error connecting to MongoDB:', error);
+    throw error;
+  }
+};
+
+const scrapeWebsite = async (db) => {
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: "new",
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+    await page.goto(process.env.TARGET_URL, { waitUntil: 'networkidle0' });
+    const html = await page.content();
+
+    const $ = cheerio.load(html);
+    const results = [];
+
+    $(process.env.HTML_SELECTOR).each((index, element) => {
+      const item = {};
+      process.env.TAGS_TO_EXTRACT.split(',').forEach(tag => {
+        item[tag.trim()] = $(element).find(tag).text().trim();
+      });
+      results.push(item);
+    });
+
+    const outputPath = path.join(__dirname, '..', 'data', `scraped_data_${Date.now()}.json`);
+    await fs.writeFile(outputPath, JSON.stringify(results, null, 2));
+
+    // Save results to MongoDB
+    const collection = db.collection('scraped_data');
+    if (results.length > 0) {
+      await collection.insertMany(results);
+      logger.info(`${results.length} documents inserted into MongoDB`);
+    } else {
+      logger.warn('No data scraped. Nothing to insert into MongoDB.');
+    }
+
+    logger.info(`Scraping completed. Results saved in ${outputPath} and MongoDB`);
+    return results;
+  } catch (error) {
+    logger.error('Error during scraping:', error);
+    throw error;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+};
+
+const main = async () => {
+  try {
+    const db = await connectToDatabase();
+    const results = await scrapeWebsite(db);
+    logger.info(`Scraped ${results.length} items`);
+  } catch (error) {
+    logger.error('Unhandled error:', error);
+  } finally {
+    if (mongoClient) {
+      await mongoClient.close();
+      logger.info('Disconnected from MongoDB');
+    }
+  }
+};
+
+main().catch(error => {
+  logger.error('Fatal error:', error);
+  process.exit(1);
+});

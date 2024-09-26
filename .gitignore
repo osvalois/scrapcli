@@ -1,0 +1,38 @@
+# Node.js dependencies
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Directories for test coverage reports
+coverage/
+
+# Directories for build artifacts
+bin/
+dist/
+build/
+
+# Optional eslint cache
+.eslintcache
+
+# Optional prettier cache
+.prettierignore
+
+# Jest snapshots
+*.snap
+
+# Mac system files
+.DS_Store
+
+# Environment variables
+.env

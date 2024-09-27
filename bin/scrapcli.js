@@ -1,17 +1,25 @@
 #!/usr/bin/env node
 
 const { program } = require('commander');
-const { version } = require('../package.json');
-const commands = require('../src/commands');
+const newCommand = require('../lib/commands/new');
+const configCommand = require('../lib/commands/config');
 
-program.version(version);
+program
+  .version(configCommand.version)
+  .description('A CLI tool for generating web scraping projects');
 
-// Register commands
-Object.entries(commands).forEach(([name, command]) => {
-  program
-    .command(name)
-    .description(command.description)
-    .action(command.action);
-});
+program
+  .command('new [projectName]')
+  .description('Create a new web scraping project')
+  .action(newCommand);
+
+program
+  .command('config')
+  .description('Configure global settings for ScrapCLI')
+  .action(configCommand);
 
 program.parse(process.argv);
+
+if (!process.argv.slice(2).length) {
+  program.outputHelp();
+}
